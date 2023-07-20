@@ -1,8 +1,11 @@
-pragma solidity ^0.8.14;
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol";
-contract Voting is Ownable, ERC1967Upgrade
-{
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.9;
+
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+contract Voting is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     mapping (address=>bytes32) voterCommit;
     mapping (string=>uint) voteCasted;
         struct Candidate
@@ -10,20 +13,21 @@ contract Voting is Ownable, ERC1967Upgrade
         string Candidatename;
     }
     Candidate [] candidates;
-    constructor(string[] memory _candidatelist)
-    {
-        //list of predefined candidates as mentioned in the problem statement
-        for(uint i=0;i<_candidatelist.length;i++)
-        {
-            candidates.push(Candidate(_candidatelist[i]));
-        }
-    }
+  
     event commitCreated(address _sender,bytes32 _commitmade);
     event revealMade(string _name,string  _salt,address _sender);
     event votingCompleted();
     enum Stage{commit,reveal}
     Stage stage=Stage.commit;
     mapping (address => bool) _isaddressVoted;
+    function initialize(string[] memory _candidatelist) initializer public {
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+         for(uint i=0;i<_candidatelist.length;i++)
+        {
+            candidates.push(Candidate(_candidatelist[i]));
+        }
+    }
     function vote_commit(bytes32 cand) public 
     {
         require(stage==Stage.commit,"Voting is not completed");
@@ -38,10 +42,6 @@ contract Voting is Ownable, ERC1967Upgrade
         require(keccak256(abi.encodePacked(name,salt))==voterCommit[msg.sender]);
         voteCasted[name]++;
         emit revealMade(name, salt, msg.sender);
-    }
-    function upgradeContract(address _newImplementation) public 
-    {
-        _upgradeTo(_newImplementation);
     }
     function delecareWinner() onlyOwner public view returns(string memory)
     {
@@ -67,5 +67,14 @@ contract Voting is Ownable, ERC1967Upgrade
     {
         stage=Stage.reveal;
         emit votingCompleted();
+    }
+   
+
+
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        onlyOwner
+        override
+    {
     }
 }
