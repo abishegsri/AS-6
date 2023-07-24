@@ -12,6 +12,7 @@ contract Voting is Ownable,ERC20
     Candidate [] candidates;
     uint private immutable  maximum_supply;
     uint public immutable priceForToken;
+    mapping (address => bool) revelMade;
     constructor(string[] memory _candidatelist,string memory name,string memory symbol,uint max_supply,uint price)  ERC20(name, symbol)
     {
         //list of predefined candidates as mentioned in the problem statement
@@ -46,7 +47,9 @@ contract Voting is Ownable,ERC20
     function revealVote(string memory name,string memory salt) public
     {
         require(stage==Stage.reveal);
+        require(revelMade[msg.sender],"You can comfirm your vote only Once");
         require(keccak256(abi.encodePacked(name,salt))==voterCommit[msg.sender]);
+        revelMade[msg.sender]=true;
         voteCasted[name]+=balanceOf(msg.sender);
         emit revealMade(name, salt, msg.sender);
     }
