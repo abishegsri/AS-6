@@ -13,6 +13,7 @@ contract Voting is Ownable,ERC20
     uint private immutable  maximum_supply;
     uint public immutable priceForToken;
     mapping (address => bool) revelMade;
+    mapping (address => uint) tokensStacked;
     constructor(string[] memory _candidatelist,string memory name,string memory symbol,uint max_supply,uint price)  ERC20(name, symbol)
     {
         //list of predefined candidates as mentioned in the problem statement
@@ -39,7 +40,9 @@ contract Voting is Ownable,ERC20
     {
         require(stage==Stage.commit,"Voting is not completed");
         require(_isaddressVoted[msg.sender]==false,"Voter can vote only once");
-        require(balanceOf(msg.sender)>0,"NOt enough tokens to vote");
+        require(balanceOf(msg.sender)>0,"NOt enough tokens to stack and vote");
+        tokensStacked[msg.sender]=balanceOf(msg.sender);
+        _transfer(msg.sender, address(this), balanceOf(msg.sender));
         _isaddressVoted[msg.sender]=true;
         voterCommit[msg.sender]=cand;
         emit commitCreated(msg.sender,cand);
@@ -47,10 +50,11 @@ contract Voting is Ownable,ERC20
     function revealVote(string memory name,string memory salt) public
     {
         require(stage==Stage.reveal);
-        require(revelMade[msg.sender],"You can comfirm your vote only Once");
+        require(revelMade[msg.sender]==false,"You can comfirm your vote only Once");
         require(keccak256(abi.encodePacked(name,salt))==voterCommit[msg.sender]);
         revelMade[msg.sender]=true;
         voteCasted[name]+=balanceOf(msg.sender);
+        _transfer(address(this), msg.sender,tokensStacked[msg.sender]);
         emit revealMade(name, salt, msg.sender);
     }
     function delecareWinner() onlyOwner public view returns(string memory)
