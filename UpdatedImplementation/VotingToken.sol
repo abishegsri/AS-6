@@ -20,17 +20,8 @@ contract VotingToken is ERC20 {
         require(msg.value >= (_amount * priceForToken), "b");
         _mint(msg.sender, _amount);
     }
-
-    function stack_token(address ad, uint token_Stacked) public {
-        _safeTransfer(msg.sender, address(this), token_Stacked); // Use safeTransfer
-    }
-
-    function unstack_token(address ad, uint token_Stacked) public {
-        _safeTransfer(address(this), msg.sender, token_Stacked); // Use safeTransfer
-    }
-
-    // Safe transfer function using SafeERC20
-    function _safeTransfer(address from, address to, uint256 amount) internal {
+ 
+    function _safeTransfer(address from, address to, uint256 amount) public {
         IERC20(this).safeTransferFrom(from, to, amount);
     }
 }
