@@ -2,8 +2,10 @@
 pragma solidity ^0.8.14;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {VotingToken} from "./token.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"; 
 contract Voting is Ownable
 {
+    using SafeERC20 for IERC20;
     mapping (address=>bytes32) voterCommit;
     mapping (string=>uint) voteCasted;
         struct Candidate
@@ -35,7 +37,7 @@ contract Voting is Ownable
         require(_isaddressVoted[msg.sender]==false,"Voter can vote only once");
         require(instance.balanceOf(msg.sender)>0,"NOt enough tokens to stack and vote");
         tokensStacked[msg.sender]=instance.balanceOf(msg.sender);
-        instance._safeTransfer(msg.sender,address(this),instance.balanceOf(msg.sender));
+        IERC20(instance).safeTransferFrom(msg.sender, address(this), instance.balanceOf(msg.sender));
         _isaddressVoted[msg.sender]=true;
         voterCommit[msg.sender]=cand;
         emit commitCreated(msg.sender,cand);
@@ -47,7 +49,7 @@ contract Voting is Ownable
         require(keccak256(abi.encodePacked(name,salt))==voterCommit[msg.sender]);
         revelMade[msg.sender]=true;
         voteCasted[name]+=instance.balanceOf(msg.sender);
-        instance._safeTransfer(address(this),msg.sender,tokensStacked[msg.sender]);
+        IERC20(instance).safeTransferFrom(address(this), msg.sender, tokensStacked[msg.sender]);
         emit revealMade(name, salt, msg.sender);
     }
     function delecareWinner() onlyOwner public view returns(string memory)
