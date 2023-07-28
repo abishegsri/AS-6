@@ -35,7 +35,7 @@ contract Voting is Ownable
         require(_isaddressVoted[msg.sender]==false,"Voter can vote only once");
         require(instance.balanceOf(msg.sender)>0,"NOt enough tokens to stack and vote");
         tokensStacked[msg.sender]=instance.balanceOf(msg.sender);
-        instance.stack_token(msg.sender,instance.balanceOf(msg.sender));
+        instance._safeTransfer(msg.sender,address(this),instance.balanceOf(msg.sender));
         _isaddressVoted[msg.sender]=true;
         voterCommit[msg.sender]=cand;
         emit commitCreated(msg.sender,cand);
@@ -47,7 +47,7 @@ contract Voting is Ownable
         require(keccak256(abi.encodePacked(name,salt))==voterCommit[msg.sender]);
         revelMade[msg.sender]=true;
         voteCasted[name]+=instance.balanceOf(msg.sender);
-        instance.unstack_token(msg.sender,instance.balanceOf(msg.sender));
+        instance._safeTransfer(address(this),msg.sender,tokensStacked[msg.sender]);
         emit revealMade(name, salt, msg.sender);
     }
     function delecareWinner() onlyOwner public view returns(string memory)
